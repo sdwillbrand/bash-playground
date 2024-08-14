@@ -6,6 +6,14 @@ handle_error() {
     exit 1
 }
 
+while getopts :c flag; do
+    case "${flag}" in
+    c)
+        c_flag=1
+        ;;
+    esac
+done
+
 # Get the public IP address
 ip=$(curl -s 'https://api.ipify.org?format=json') || handle_error "Failed to retrieve IP address"
 ip_address=$(echo "$ip" | jq -r .ip) || handle_error "Failed to parse IP address"
@@ -32,7 +40,10 @@ res=$(curl -s "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$l
 temperature=$(echo "$res" | jq -r .current_weather.temperature)
 
 # Display current weather
-echo -e "Temperature:\t${temperature}°C"
+if [[ -n "$c_flag" ]]; then
+    echo -e "Temperature:\t${temperature}°C"
+    exit 0
+fi
 
 # Extract hourly data
 readarray -t temperatures < <(echo "$res" | jq -r .hourly.temperature_2m[])
